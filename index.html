@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Taste Of Town</title>
 
 <style>
@@ -18,34 +16,12 @@ color:white;
 header{
 background:#2c1b0f;
 padding:15px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+text-align:center;
 }
 
 header h1{
-color:#ffb347;
 margin:0;
-}
-
-.cartBtn{
-background:#ffb347;
-border:none;
-padding:10px;
-border-radius:6px;
-cursor:pointer;
-}
-
-.search{
-padding:10px;
-background:#1b1b1b;
-}
-
-.search input{
-width:100%;
-padding:10px;
-border-radius:8px;
-border:none;
+color:#ffb347;
 }
 
 .category{
@@ -93,6 +69,28 @@ border-radius:6px;
 cursor:pointer;
 }
 
+.floatingCart{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#ffb347;
+color:black;
+padding:14px 18px;
+border-radius:50px;
+font-size:20px;
+cursor:pointer;
+box-shadow:0 5px 15px rgba(0,0,0,0.4);
+}
+
+#cartCount{
+background:red;
+color:white;
+border-radius:50%;
+padding:3px 8px;
+font-size:14px;
+margin-left:5px;
+}
+
 #cartPanel{
 position:fixed;
 right:-100%;
@@ -108,27 +106,15 @@ overflow:auto;
 .cartItem{
 display:flex;
 justify-content:space-between;
-margin-bottom:8px;
+align-items:center;
+margin-bottom:10px;
 }
 
 .qty button{
 background:#444;
 border:none;
 color:white;
-padding:2px 6px;
-}
-
-.remove{
-color:red;
-cursor:pointer;
-}
-
-input{
-width:100%;
-padding:8px;
-margin-bottom:6px;
-border-radius:6px;
-border:none;
+padding:3px 8px;
 }
 
 .orderBtn{
@@ -139,38 +125,24 @@ padding:12px;
 border-radius:6px;
 color:white;
 font-size:16px;
-}
-
-.review{
-background:#1f1f1f;
-margin:10px;
-padding:10px;
-border-radius:8px;
+margin-top:10px;
+cursor:pointer;
 }
 
 </style>
-
 </head>
 
 <body>
 
 <header>
-
 <h1>Taste Of Town</h1>
-
-<button class="cartBtn" onclick="toggleCart()">🛒 Cart</button>
-
 </header>
-
-<div class="search">
-
-<input id="search" placeholder="Search food..." onkeyup="searchFood()">
-
-</div>
 
 <div id="menu"></div>
 
-<!-- CART PANEL -->
+<div class="floatingCart" onclick="toggleCart()">
+🛒 <span id="cartCount">0</span>
+</div>
 
 <div id="cartPanel">
 
@@ -182,30 +154,16 @@ border-radius:8px;
 
 <p>Delivery ₹50</p>
 
-<input id="name" placeholder="Your Name">
-
-<input id="phone" placeholder="Phone Number">
-
 <button class="orderBtn" onclick="sendOrder()">Order on WhatsApp</button>
 
 </div>
 
-<!-- REVIEWS -->
-
-<h2 style="padding:10px">Customer Reviews</h2>
-
-<div class="review">⭐️⭐️⭐️⭐️⭐️ Amazing food!</div>
-<div class="review">⭐️⭐️⭐️⭐️ Best burger in town.</div>
-<div class="review">⭐️⭐️⭐️⭐️⭐️ Fast delivery & tasty coffee.</div>
-
 <script>
 
 const owner="917696218152"
-
 const delivery=50
 
 let cart={}
-
 let total=0
 
 const menuData={
@@ -289,8 +247,8 @@ updateCart()
 function updateCart(){
 
 let html=""
-
 total=0
+let count=0
 
 for(let item in cart){
 
@@ -298,6 +256,7 @@ let p=cart[item].price
 let q=cart[item].qty
 
 total+=p*q
+count+=q
 
 html+=`
 
@@ -317,8 +276,6 @@ ${q}
 
 <span>₹${p*q}</span>
 
-<span class="remove" onclick="removeItem('${item}')">❌</span>
-
 </div>
 
 `
@@ -329,6 +286,7 @@ let grand=total+delivery
 
 document.getElementById("cartItems").innerHTML=html
 document.getElementById("total").innerText=grand
+document.getElementById("cartCount").innerText=count
 
 }
 
@@ -342,63 +300,52 @@ updateCart()
 
 }
 
-function removeItem(name){
-
-delete cart[name]
-
-updateCart()
-
-}
-
-function searchFood(){
-
-let text=document.getElementById("search").value.toLowerCase()
-
-document.querySelectorAll(".card").forEach(card=>{
-
-let name=card.querySelector("h3").innerText.toLowerCase()
-
-card.style.display=name.includes(text)?"block":"none"
-
-})
-
-}
-
 function sendOrder(){
 
-let name=document.getElementById("name").value
-
-let phone=document.getElementById("phone").value
+if(Object.keys(cart).length===0){
+alert("Cart is empty")
+return
+}
 
 let grand=total+delivery
 
-navigator.geolocation.getCurrentPosition(function(pos){
-
-let lat=pos.coords.latitude
-let lon=pos.coords.longitude
+function openWhatsApp(lat="",lon=""){
 
 let msg="Taste Of Town Order\n\n"
 
-msg+="Name: "+name+"\n"
-msg+="Phone: "+phone+"\n\n"
-
 for(let item in cart){
-
 msg+=item+" x"+cart[item].qty+"\n"
-
 }
 
 msg+="\nFood Total ₹"+total
 msg+="\nDelivery ₹"+delivery
 msg+="\nGrand Total ₹"+grand
 
+if(lat!=""){
 msg+="\n\nLocation: https://maps.google.com/?q="+lat+","+lon
+}
 
-let url="https://wa.me/"+owner+"?text="+encodeURIComponent(msg)
+let url="https://api.whatsapp.com/send?phone="+owner+"&text="+encodeURIComponent(msg)
 
-window.open(url)
+window.open(url,"_blank")
 
-})
+}
+
+if(navigator.geolocation){
+
+navigator.geolocation.getCurrentPosition(
+
+pos=>openWhatsApp(pos.coords.latitude,pos.coords.longitude),
+
+()=>openWhatsApp()
+
+)
+
+}else{
+
+openWhatsApp()
+
+}
 
 }
 
