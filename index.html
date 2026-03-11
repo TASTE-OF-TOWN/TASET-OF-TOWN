@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Taste Of Town</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#111;
+color:white;
+}
+
+header{
+background:#2c1b0f;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+header h1{
+color:#ffb347;
+margin:0;
+}
+
+.cartBtn{
+background:#ffb347;
+border:none;
+padding:10px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.search{
+padding:10px;
+background:#1b1b1b;
+}
+
+.search input{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:none;
+}
+
+.category{
+padding:10px;
+font-size:22px;
+color:#ffb347;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+gap:12px;
+padding:12px;
+}
+
+.card{
+background:#1f1f1f;
+border-radius:10px;
+overflow:hidden;
+}
+
+.card img{
+width:100%;
+height:130px;
+object-fit:cover;
+}
+
+.card h3{
+padding:8px;
+font-size:15px;
+}
+
+.price{
+padding:0 8px;
+color:#ffb347;
+}
+
+.card button{
+margin:8px;
+width:calc(100% - 16px);
+background:#ffb347;
+border:none;
+padding:8px;
+border-radius:6px;
+cursor:pointer;
+}
+
+#cartPanel{
+position:fixed;
+right:-100%;
+top:0;
+width:320px;
+height:100%;
+background:#1c1c1c;
+padding:15px;
+transition:0.4s;
+overflow:auto;
+}
+
+.cartItem{
+display:flex;
+justify-content:space-between;
+margin-bottom:8px;
+}
+
+.qty button{
+background:#444;
+border:none;
+color:white;
+padding:2px 6px;
+}
+
+.remove{
+color:red;
+cursor:pointer;
+}
+
+input{
+width:100%;
+padding:8px;
+margin-bottom:6px;
+border-radius:6px;
+border:none;
+}
+
+.orderBtn{
+width:100%;
+background:#25D366;
+border:none;
+padding:12px;
+border-radius:6px;
+color:white;
+font-size:16px;
+}
+
+.review{
+background:#1f1f1f;
+margin:10px;
+padding:10px;
+border-radius:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>Taste Of Town</h1>
+
+<button class="cartBtn" onclick="toggleCart()">🛒 Cart</button>
+
+</header>
+
+<div class="search">
+
+<input id="search" placeholder="Search food..." onkeyup="searchFood()">
+
+</div>
+
+<div id="menu"></div>
+
+<!-- CART PANEL -->
+
+<div id="cartPanel">
+
+<h2>Your Cart</h2>
+
+<div id="cartItems"></div>
+
+<h3>Total ₹ <span id="total">0</span></h3>
+
+<p>Delivery ₹50</p>
+
+<input id="name" placeholder="Your Name">
+
+<input id="phone" placeholder="Phone Number">
+
+<button class="orderBtn" onclick="sendOrder()">Order on WhatsApp</button>
+
+</div>
+
+<!-- REVIEWS -->
+
+<h2 style="padding:10px">Customer Reviews</h2>
+
+<div class="review">⭐️⭐️⭐️⭐️⭐️ Amazing food!</div>
+<div class="review">⭐️⭐️⭐️⭐️ Best burger in town.</div>
+<div class="review">⭐️⭐️⭐️⭐️⭐️ Fast delivery & tasty coffee.</div>
+
+<script>
+
+const owner="917696218152"
+
+const delivery=50
+
+let cart={}
+
+let total=0
+
+const menuData={
+
+Burgers:[
+["Aloo Tikki Burger",40,"https://images.unsplash.com/photo-1550547660-d9450f859349"],
+["Paneer Zinger Burger",70,"https://images.unsplash.com/photo-1568901346375-23c9450c58cd"],
+["Veg Special Burger",80,"https://images.unsplash.com/photo-1550317138-10000687a72b"]
+],
+
+Pizza:[
+["Margherita Pizza",170,"https://images.unsplash.com/photo-1604382355076-af4b0eb60143"],
+["Paneer Pizza",350,"https://images.unsplash.com/photo-1548365328-9f547fb0953d"]
+],
+
+Fries:[
+["Classic Fries",100,"https://images.unsplash.com/photo-1541592106381-b31e9677c0e5"],
+["Peri Peri Fries",120,"https://images.unsplash.com/photo-1585238342024-78d387f4a707"]
+],
+
+Coffee:[
+["Hot Coffee",50,"https://images.unsplash.com/photo-1509042239860-f550ce710b93"],
+["Cold Coffee",80,"https://images.unsplash.com/photo-1511920170033-f8396924c348"]
+]
+
+}
+
+function loadMenu(){
+
+let menu=document.getElementById("menu")
+
+menu.innerHTML=""
+
+for(let cat in menuData){
+
+menu.innerHTML+=`<div class="category">${cat}</div><div class="grid">`
+
+menuData[cat].forEach(item=>{
+
+menu.innerHTML+=`
+
+<div class="card">
+
+<img src="${item[2]}">
+
+<h3>${item[0]}</h3>
+
+<p class="price">₹${item[1]}</p>
+
+<button onclick="add('${item[0]}',${item[1]})">Add to Cart</button>
+
+</div>
+
+`
+
+})
+
+menu.innerHTML+="</div>"
+
+}
+
+}
+
+function toggleCart(){
+
+let cartPanel=document.getElementById("cartPanel")
+
+cartPanel.style.right=cartPanel.style.right==="0px"?"-100%":"0"
+
+}
+
+function add(name,price){
+
+if(!cart[name]) cart[name]={price:price,qty:1}
+else cart[name].qty++
+
+updateCart()
+
+}
+
+function updateCart(){
+
+let html=""
+
+total=0
+
+for(let item in cart){
+
+let p=cart[item].price
+let q=cart[item].qty
+
+total+=p*q
+
+html+=`
+
+<div class="cartItem">
+
+${item}
+
+<div class="qty">
+
+<button onclick="change('${item}',-1)">-</button>
+
+${q}
+
+<button onclick="change('${item}',1)">+</button>
+
+</div>
+
+<span>₹${p*q}</span>
+
+<span class="remove" onclick="removeItem('${item}')">❌</span>
+
+</div>
+
+`
+
+}
+
+let grand=total+delivery
+
+document.getElementById("cartItems").innerHTML=html
+document.getElementById("total").innerText=grand
+
+}
+
+function change(name,val){
+
+cart[name].qty+=val
+
+if(cart[name].qty<=0) delete cart[name]
+
+updateCart()
+
+}
+
+function removeItem(name){
+
+delete cart[name]
+
+updateCart()
+
+}
+
+function searchFood(){
+
+let text=document.getElementById("search").value.toLowerCase()
+
+document.querySelectorAll(".card").forEach(card=>{
+
+let name=card.querySelector("h3").innerText.toLowerCase()
+
+card.style.display=name.includes(text)?"block":"none"
+
+})
+
+}
+
+function sendOrder(){
+
+let name=document.getElementById("name").value
+
+let phone=document.getElementById("phone").value
+
+let grand=total+delivery
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+let lat=pos.coords.latitude
+let lon=pos.coords.longitude
+
+let msg="Taste Of Town Order\n\n"
+
+msg+="Name: "+name+"\n"
+msg+="Phone: "+phone+"\n\n"
+
+for(let item in cart){
+
+msg+=item+" x"+cart[item].qty+"\n"
+
+}
+
+msg+="\nFood Total ₹"+total
+msg+="\nDelivery ₹"+delivery
+msg+="\nGrand Total ₹"+grand
+
+msg+="\n\nLocation: https://maps.google.com/?q="+lat+","+lon
+
+let url="https://wa.me/"+owner+"?text="+encodeURIComponent(msg)
+
+window.open(url)
+
+})
+
+}
+
+loadMenu()
+
+</script>
+
+</body>
+</html>
